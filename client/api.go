@@ -231,6 +231,7 @@ func (a *API) Init(key string, backends *stripe.Backends) {
 	if backends == nil {
 		backends = &stripe.Backends{
 			API:     stripe.GetBackend(stripe.APIBackend),
+			Connect: stripe.GetBackend(stripe.ConnectBackend),
 			Uploads: stripe.GetBackend(stripe.UploadsBackend),
 		}
 	}

@@ -35,6 +35,9 @@ const (
 	// APIURL is the URL of the API service backend.
 	APIURL string = "https://api.stripe.com"
 
+	// APIBackend is a constant representing the API service backend.
+	ConnectBackend SupportedBackend = "connect"
+
 	// UnknownPlatform is the string returned as the system name if we couldn't get
 	// one from `uname`.
 	UnknownPlatform string = "unknown platform"
@@ -598,8 +601,8 @@ func (s *BackendImplementation) sleepTime(numRetries int) time.Duration {
 
 // Backends are the currently supported endpoints.
 type Backends struct {
-	API, Uploads Backend
-	mu           sync.RWMutex
+	API, Connect, Uploads Backend
+	mu                    sync.RWMutex
 }
 
 // SupportedBackend is an enumeration of supported Stripe endpoints.
@@ -688,6 +691,8 @@ func GetBackend(backendType SupportedBackend) Backend {
 	switch backendType {
 	case APIBackend:
 		backend = backends.API
+	case ConnectBackend:
+		backend = backends.Connect
 	case UploadsBackend:
 		backend = backends.Uploads
 	}
@@ -714,6 +719,8 @@ func GetBackend(backendType SupportedBackend) Backend {
 	switch backendType {
 	case APIBackend:
 		backends.API = backend
+	case ConnectBackend:
+		backends.Connect = backend
 	case UploadsBackend:
 		backends.Uploads = backend
 	}
@@ -758,6 +765,15 @@ func GetBackendWithConfig(backendType SupportedBackend, config *BackendConfig) B
 		config.URL = normalizeURL(config.URL)
 
 		return newBackendImplementation(backendType, config)
+
+	case ConnectBackend:
+		if config.URL == "" {
+			config.URL = connectURL
+		}
+
+		config.URL = normalizeURL(config.URL)
+
+		return newBackendImplementation(backendType, config)
 	}
 
 	return nil
@@ -790,9 +806,11 @@ func Int64Slice(v []int64) []*int64 {
 // should only need to use this for testing purposes or on App Engine.
 func NewBackends(httpClient *http.Client) *Backends {
 	apiConfig := &BackendConfig{HTTPClient: httpClient}
+	connectConfig := &BackendConfig{HTTPClient: httpClient}
 	uploadConfig := &BackendConfig{HTTPClient: httpClient}
 	return &Backends{
 		API:     GetBackendWithConfig(APIBackend, apiConfig),
+		Connect: GetBackendWithConfig(ConnectBackend, connectConfig),
 		Uploads: GetBackendWithConfig(UploadsBackend, uploadConfig),
 	}
 }
@@ -838,6 +856,8 @@ func SetBackend(backend SupportedBackend, b Backend) {
 	switch backend {
 	case APIBackend:
 		backends.API = b
+	case ConnectBackend:
+		backends.API = b
 	case UploadsBackend:
 		backends.Uploads = b
 	}
@@ -878,6 +898,9 @@ func StringSlice(v []string) []*string {
 //
 
 const apiURL = "https://api.stripe.com"
+
+// URL Base used for OAuth requests.
+const connectURL = "https://connect.stripe.com"
 
 // clientversion is the binding version
 const clientversion = "61.4.0"
