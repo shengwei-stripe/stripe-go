@@ -35,6 +35,9 @@ const (
 	// APIURL is the URL of the API service backend.
 	APIURL string = "https://api.stripe.com"
 
+	// CONNECTURL is the URL for OAuth.
+	CONNECTURL string = "https://connect.stripe.com"
+
 	// APIBackend is a constant representing the API service backend.
 	ConnectBackend SupportedBackend = "connect"
 
@@ -64,6 +67,9 @@ var EnableTelemetry = false
 
 // Key is the Stripe API key used globally in the binding.
 var Key string
+
+// ClientID is the Stripe Client ID used globally in the binding.
+var ClientID string
 
 //
 // Public types
