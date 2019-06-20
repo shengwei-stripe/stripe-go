@@ -4,10 +4,7 @@ package oauth
 import (
   "bytes"
   "net/url"
-  // "net/http"
-  //
   stripe "github.com/stripe/stripe-go"
-  // "github.com/stripe/stripe-go/form"
 )
 
 // Client is used to invoke /oauth and related APIs.

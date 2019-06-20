@@ -37,6 +37,7 @@ import (
 	issuingdispute "github.com/stripe/stripe-go/issuing/dispute"
 	"github.com/stripe/stripe-go/issuing/transaction"
 	"github.com/stripe/stripe-go/loginlink"
+	"github.com/stripe/stripe-go/oauth"
 	"github.com/stripe/stripe-go/order"
 	"github.com/stripe/stripe-go/orderreturn"
 	"github.com/stripe/stripe-go/paymentintent"
@@ -147,6 +148,8 @@ type API struct {
 	IssuingTransactions *transaction.Client
 	// LoginLinks is the client used to invoke login link related APIs.
 	LoginLinks *loginlink.Client
+	// OAuth is the client used to invoke /oauth APIs.
+	OAuth *oauth.Client
 	// Orders is the client used to invoke /orders APIs.
 	Orders *order.Client
 	// OrderReturns is the client used to invoke /order_returns APIs.
