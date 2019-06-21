@@ -4,6 +4,7 @@ package oauth
 import (
   "fmt"
   "net/http"
+  "github.com/stripe/stripe-go/form"
   stripe "github.com/stripe/stripe-go"
 )
 
@@ -18,31 +19,23 @@ func AuthorizeURL(params *stripe.AuthorizeURLParams) string {
 }
 
 func (c Client) AuthorizeURL(params *stripe.AuthorizeURLParams) string {
-
   express := ""
   if stripe.BoolValue(params.Express) {
     express = "/express"
   }
-  response_type := "code"
-  if params.ResponseType != nil {
-    response_type = stripe.StringValue(params.ResponseType)
+  if params.ClientID == nil {
+    params.ClientID = stripe.String(stripe.ClientID)
   }
-  always_prompt := "false"
-  if stripe.BoolValue(params.AlwaysPrompt) {
-    always_prompt = "true"
+  if params.ResponseType == nil {
+    params.ResponseType = stripe.String("code")
   }
-
-  path := stripe.FormatURLPath(
-    "client_id=%s&response_type=%s&scope=%s&state=%s&redirect_uri=%s&stripe_landing=%s&always_prompt=%s",
-    stripe.ClientID,
-    response_type,
-    stripe.StringValue(params.Scope),
-    stripe.StringValue(params.State),
-    stripe.StringValue(params.RedirectURI),
-    stripe.StringValue(params.StripeLanding),
-    always_prompt,
+  qs := &form.Values{}
+  form.AppendTo(qs, params)
+  return fmt.Sprintf(
+    "https://connect.stripe.com%s/oauth/authorize?%s",
+    express,
+    qs.EncodeValues(),
   )
-  return fmt.Sprintf("https://connect.stripe.com%s/oauth/authorize?%s", express, path)
 }
 
 func New(params *stripe.OAuthTokenParams) (*stripe.OAuthToken, error) {

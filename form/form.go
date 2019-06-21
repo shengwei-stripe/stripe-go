@@ -484,7 +484,8 @@ func (f *Values) Add(key, val string) {
 	f.values = append(f.values, formValue{key, val})
 }
 
-// Encode encodes the values into “URL encoded” form ("bar=baz&foo=quux").
+// Encode encodes the keys and values into “URL encoded” form
+// ("bar=baz&foo=quux").
 func (f *Values) Encode() string {
 	var buf bytes.Buffer
 	for _, v := range f.values {
@@ -498,6 +499,20 @@ func (f *Values) Encode() string {
 	return buf.String()
 }
 
+// Encode encodes only the values into “URL encoded” form
+// ("bar=baz&foo=quux") so that we can have keys like `stripe_user[email]=test`
+func (f *Values) EncodeValues() string {
+	var buf bytes.Buffer
+	for _, v := range f.values {
+		if buf.Len() > 0 {
+			buf.WriteByte('&')
+		}
+		buf.WriteString(v.Key)
+		buf.WriteString("=")
+		buf.WriteString(url.QueryEscape(v.Value))
+	}
+	return buf.String()
+}
 // Empty returns true if no parameters have been set.
 func (f *Values) Empty() bool {
 	return len(f.values) == 0

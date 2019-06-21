@@ -43,6 +43,38 @@ func TestAuthorizeURLWithOptionalArgs(t *testing.T) {
   assert.Contains(t, url, "always_prompt=true")
 }
 
+func TestAuthorizeURLWithStripeUser(t *testing.T) {
+  stripe.ClientID = "ca_123"
+  url := AuthorizeURL(&stripe.AuthorizeURLParams{
+    ResponseType:   stripe.String("test-code"),
+    StripeUser:     &stripe.OAuthStripeUserParams{
+      BlockKana:    stripe.String("block-kana"),
+      BlockKanji:   stripe.String("block-kanji"),
+      BuildingKana: stripe.String("building-kana"),
+      BuildingKanji: stripe.String("building-kanji"),
+      BusinessName:  stripe.String("b-name"),
+      BusinessType: stripe.OAuthStripeUserBusinessTypeLLC,
+      City: stripe.String("Elko"),
+      Country: stripe.String("US"),
+      State: stripe.String("NV"),
+      Zip: stripe.String("12345"),
+    },
+  })
+
+  assert.Contains(t, url, "response_type=test-code")
+  assert.Contains(t, url, "stripe_user[block_kana]=block-kana")
+  assert.Contains(t, url, "stripe_user[block_kanji]=block-kanji")
+  assert.Contains(t, url, "stripe_user[building_kana]=building-kana")
+  assert.Contains(t, url, "stripe_user[building_kanji]=building-kanji")
+  assert.Contains(t, url, "stripe_user[business_name]=b-name")
+  assert.Contains(t, url, "stripe_user[business_type]=llc")
+  assert.Contains(t, url, "stripe_user[city]=Elko")
+  assert.Contains(t, url, "stripe_user[state]=NV")
+  assert.Contains(t, url, "stripe_user[country]=US")
+  assert.Contains(t, url, "stripe_user[street_address]=123 main")
+  assert.Contains(t, url, "stripe_user[zip]=12345")
+}
+
 
 // RoundTripFunc .
 type RoundTripFunc func(req *http.Request) *http.Response
@@ -113,7 +145,7 @@ func TestNewOAuthToken(t *testing.T) {
   assert.Equal(t, token.TokenType, stripe.OAuthTokenTypeBearer)
   assert.Equal(t, token.StripePublishableKey, "pk_123")
   assert.Equal(t, token.StripeUserID, "acct_123")
-  assert.Equal(t, token.Scope, stripe.ScopeTypeReadWrite)
+  assert.Equal(t, token.Scope, stripe.OAuthScopeTypeReadWrite)
 }
 
 func TestNewOAuthTokenWithCustomKey(t *testing.T) {
