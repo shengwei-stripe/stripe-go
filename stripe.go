@@ -863,7 +863,7 @@ func SetBackend(backend SupportedBackend, b Backend) {
 	case APIBackend:
 		backends.API = b
 	case ConnectBackend:
-		backends.API = b
+		backends.Connect = b
 	case UploadsBackend:
 		backends.Uploads = b
 	}

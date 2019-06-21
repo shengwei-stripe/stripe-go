@@ -2,6 +2,7 @@
 package oauth
 
 import (
+  "net/http"
   "bytes"
   "net/url"
   stripe "github.com/stripe/stripe-go"
@@ -22,7 +23,7 @@ func (c Client) AuthorizeURL(params *stripe.AuthorizeURLParams) string {
   buf.WriteString(stripe.CONNECTURL)
 
   if stripe.BoolValue(params.Express) {
-    buf.WriteString("/express")
+    buf.WriteString("/express/oauth/authorize")
   } else {
     buf.WriteString("/oauth/authorize")
   }
@@ -56,6 +57,25 @@ func (c Client) AuthorizeURL(params *stripe.AuthorizeURLParams) string {
   buf.WriteByte('?')
   buf.WriteString(v.Encode())
   return buf.String()
+}
+
+func New(params *stripe.OAuthTokenParams) (*stripe.OAuthToken, error) {
+  return getC().New(params)
+}
+
+func (c Client) New(params *stripe.OAuthTokenParams) (*stripe.OAuthToken, error) {
+  // client_secret is sent in the post body for this endpoint.
+  if stripe.StringValue(params.ClientSecret) == "" {
+    params.ClientSecret = stripe.String(stripe.Key)
+  }
+  if stripe.StringValue(params.GrantType) == "" {
+    params.GrantType = stripe.String("authorization_code")
+  }
+
+  oauth_token := &stripe.OAuthToken{}
+  err := c.B.Call(http.MethodPost, "/oauth/token", c.Key, params, oauth_token)
+
+  return oauth_token, err
 }
 
 func getC() Client {
