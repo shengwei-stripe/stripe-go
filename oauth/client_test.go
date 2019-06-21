@@ -110,7 +110,7 @@ func TestNewOAuthToken(t *testing.T) {
   assert.Equal(t, token.AccessToken, "sk_123")
   assert.Equal(t, token.Livemode, false)
   assert.Equal(t, token.RefreshToken, "rt_123")
-  assert.Equal(t, token.OAuthTokenType, stripe.OAuthTokenTypeBearer)
+  assert.Equal(t, token.TokenType, stripe.OAuthTokenTypeBearer)
   assert.Equal(t, token.StripePublishableKey, "pk_123")
   assert.Equal(t, token.StripeUserID, "acct_123")
   assert.Equal(t, token.Scope, stripe.ScopeTypeReadWrite)

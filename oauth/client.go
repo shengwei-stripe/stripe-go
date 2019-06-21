@@ -2,9 +2,8 @@
 package oauth
 
 import (
+  "fmt"
   "net/http"
-  "bytes"
-  "net/url"
   stripe "github.com/stripe/stripe-go"
 )
 
@@ -19,44 +18,31 @@ func AuthorizeURL(params *stripe.AuthorizeURLParams) string {
 }
 
 func (c Client) AuthorizeURL(params *stripe.AuthorizeURLParams) string {
-  var buf bytes.Buffer
-  buf.WriteString(stripe.CONNECTURL)
 
+  express := ""
   if stripe.BoolValue(params.Express) {
-    buf.WriteString("/express/oauth/authorize")
-  } else {
-    buf.WriteString("/oauth/authorize")
+    express = "/express"
   }
-
-  v := url.Values{
-    "client_id":     {stripe.ClientID},
+  response_type := "code"
+  if params.ResponseType != nil {
+    response_type = stripe.StringValue(params.ResponseType)
   }
-
-  if stripe.StringValue(params.ResponseType) == "" {
-    v.Set("response_type", "code")
-  } else {
-    v.Set("response_type", *params.ResponseType)
-  }
-
-  if stripe.StringValue(params.Scope) != "" {
-    v.Set("scope", *params.Scope)
-  }
-  if stripe.StringValue(params.State) != "" {
-    v.Set("state", *params.State)
-  }
-  if stripe.StringValue(params.RedirectURI) != "" {
-    v.Set("redirect_uri", *params.RedirectURI)
-  }
-  if stripe.StringValue(params.StripeLanding) != "" {
-    v.Set("stripe_landing", *params.StripeLanding)
-  }
+  always_prompt := "false"
   if stripe.BoolValue(params.AlwaysPrompt) {
-    v.Set("always_prompt", "true")
+    always_prompt = "true"
   }
 
-  buf.WriteByte('?')
-  buf.WriteString(v.Encode())
-  return buf.String()
+  path := stripe.FormatURLPath(
+    "client_id=%s&response_type=%s&scope=%s&state=%s&redirect_uri=%s&stripe_landing=%s&always_prompt=%s",
+    stripe.ClientID,
+    response_type,
+    stripe.StringValue(params.Scope),
+    stripe.StringValue(params.State),
+    stripe.StringValue(params.RedirectURI),
+    stripe.StringValue(params.StripeLanding),
+    always_prompt,
+  )
+  return fmt.Sprintf("https://connect.stripe.com%s/oauth/authorize?%s", express, path)
 }
 
 func New(params *stripe.OAuthTokenParams) (*stripe.OAuthToken, error) {
