@@ -40,6 +40,28 @@ const (
   OAuthStripeUserGenderMale   OAuthStripeUserGender = "male"
 )
 
+// Type of Errors raised when failing authorization.
+type OAuthError string
+
+// List of supported OAuthError values.
+const (
+  OAuthErrorInvalidGrant            OAuthError = "invalid_grant"
+  OAuthErrorInvalidRequest          OAuthError = "invalid_request"
+  OAuthErrorInvalidScope            OAuthError = "invalid_scope"
+  OAuthErrorUnsupportedGrantType    OAuthError = "unsupported_grant_type"
+  OAuthErrorUnsupportedResponseType OAuthError = "unsupported_response_type"
+)
+
+
+// Type of Errors raised when failing authorization.
+type DeauthorizationError string
+
+// List of supported DeauthorizationError values.
+const (
+  DeauthorizationErrorInvalidClient   DeauthorizationError = "invalid_client"
+  DeauthorizationErrorInvalidRequest  DeauthorizationError = "invalid_request"
+)
+
 // Params for the stripe_user OAuth Authorize params.
 type OAuthStripeUserParams struct {
   BlockKana          *string                       `form:"block_kana"`
@@ -51,9 +73,9 @@ type OAuthStripeUserParams struct {
   City               *string                       `form:"city"`
   Country            *string                       `form:"country"`
   Currency           *string                       `form:"currency"`
-  DobDay             *int                          `form:"dob_tay"`
-  DobMonth           *int                          `form:"dob_month"`
-  DobYear            *int                          `form:"dob_year"`
+  DobDay             uint64                        `form:"dob_day"`
+  DobMonth           uint64                        `form:"dob_month"`
+  DobYear            uint64                        `form:"dob_year"`
   Email              *string                       `form:"email"`
   FirstName          *string                       `form:"first_name"`
   FirstNameKana      *string                       `form:"first_name_kana"`
@@ -85,6 +107,13 @@ type AuthorizeURLParams struct {
   StripeUser      *OAuthStripeUserParams  `form:"stripe_user"`
 }
 
+// Params for deauthorizing an account.
+type DeauthorizeParams struct {
+  Params           `form:"*"`
+  ClientID         *string    `form:"client_id"`
+  StripeUserID     *string    `form:"stripe_user_id"`
+}
+
 // OAuthTokenParams is the set of paramaters that can be used to request
 // OAuthTokens.
 type OAuthTokenParams struct {
@@ -100,10 +129,20 @@ type OAuthTokenParams struct {
 // https://stripe.com/docs/connect/oauth-reference#post-token
 type OAuthToken struct {
   AccessToken            string          `json:"access_token"`
+  Error                  OAuthError      `json:"error"`
+  ErrorDescription       string          `json:"error_description"`
   Livemode               bool            `json:"livemode"`
   RefreshToken           string          `json:"refresh_token"`
   Scope                  OAuthScopeType  `json:"scope"`
   StripePublishableKey   string          `json:"stripe_publishable_key"`
   StripeUserID           string          `json:"stripe_user_id"`
   TokenType              OAuthTokenType  `json:"token_type"`
+}
+
+// Deauthorization is the value of the return from deauthorizing.
+// https://stripe.com/docs/connect/oauth-reference#post-deauthorize
+type Deauthorization struct {
+  Error                  DeauthorizationError `json:"error"`
+  ErrorDescription       string               `json:"error_description"`
+  StripeUserID           string               `json:"stripe_user_id"`
 }

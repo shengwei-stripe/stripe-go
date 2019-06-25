@@ -57,6 +57,22 @@ func (c Client) New(params *stripe.OAuthTokenParams) (*stripe.OAuthToken, error)
   return oauth_token, err
 }
 
+func Del(params *stripe.DeauthorizeParams) (*stripe.Deauthorization, error) {
+  return getC().Del(params)
+}
+
+func (c Client) Del(params *stripe.DeauthorizeParams) (*stripe.Deauthorization, error) {
+  deauthorization := &stripe.Deauthorization{}
+  err := c.B.Call(
+    http.MethodPost,
+    "/oauth/deauthorize",
+    c.Key,
+    params,
+    deauthorization,
+  )
+  return deauthorization, err
+}
+
 func getC() Client {
   return Client{stripe.GetBackend(stripe.ConnectBackend), stripe.Key}
 }

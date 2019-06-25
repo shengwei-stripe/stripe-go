@@ -2,8 +2,7 @@ package oauth
 
 import (
   "bytes"
-	"io/ioutil"
-  // "os"
+  "io/ioutil"
   "net/http"
   "testing"
   assert "github.com/stretchr/testify/require"
@@ -46,18 +45,35 @@ func TestAuthorizeURLWithOptionalArgs(t *testing.T) {
 func TestAuthorizeURLWithStripeUser(t *testing.T) {
   stripe.ClientID = "ca_123"
   url := AuthorizeURL(&stripe.AuthorizeURLParams{
-    ResponseType:   stripe.String("test-code"),
-    StripeUser:     &stripe.OAuthStripeUserParams{
-      BlockKana:    stripe.String("block-kana"),
-      BlockKanji:   stripe.String("block-kanji"),
-      BuildingKana: stripe.String("building-kana"),
-      BuildingKanji: stripe.String("building-kanji"),
-      BusinessName:  stripe.String("b-name"),
-      BusinessType: stripe.OAuthStripeUserBusinessTypeLLC,
-      City: stripe.String("Elko"),
-      Country: stripe.String("US"),
-      State: stripe.String("NV"),
-      Zip: stripe.String("12345"),
+    ResponseType:          stripe.String("test-code"),
+    StripeUser:            &stripe.OAuthStripeUserParams{
+      BlockKana:           stripe.String("block-kana"),
+      BlockKanji:          stripe.String("block-kanji"),
+      BuildingKana:        stripe.String("building-kana"),
+      BuildingKanji:       stripe.String("building-kanji"),
+      BusinessName:        stripe.String("b-name"),
+      BusinessType:        stripe.OAuthStripeUserBusinessTypeLLC,
+      City:                stripe.String("Elko"),
+      Country:             stripe.String("US"),
+      Currency:            stripe.String("USD"),
+      DobDay:              15,
+      DobMonth:            10,
+      DobYear:             2019,
+      Email:               stripe.String("test@example.com"),
+      FirstName:           stripe.String("first-name"),
+      FirstNameKana:       stripe.String("first-name-kana"),
+      FirstNameKanji:      stripe.String("first-name-kanji"),
+      Gender:              stripe.OAuthStripeUserGenderFemale,
+      LastName:            stripe.String("last-name"),
+      LastNameKana:        stripe.String("last-name-kana"),
+      LastNameKanji:       stripe.String("last-name-kanji"),
+      PhoneNumber:         stripe.String("999-999-9999"),
+      PhysicalProduct:     stripe.Bool(false),
+      ProductDescription:  stripe.String("product-description"),
+      State:               stripe.String("NV"),
+      StreetAddress:       stripe.String("123 main"),
+      Url:                 stripe.String("http://example.com"),
+      Zip:                 stripe.String("12345"),
     },
   })
 
@@ -69,22 +85,39 @@ func TestAuthorizeURLWithStripeUser(t *testing.T) {
   assert.Contains(t, url, "stripe_user[business_name]=b-name")
   assert.Contains(t, url, "stripe_user[business_type]=llc")
   assert.Contains(t, url, "stripe_user[city]=Elko")
-  assert.Contains(t, url, "stripe_user[state]=NV")
   assert.Contains(t, url, "stripe_user[country]=US")
-  assert.Contains(t, url, "stripe_user[street_address]=123 main")
+  assert.Contains(t, url, "stripe_user[currency]=USD")
+  assert.Contains(t, url, "stripe_user[dob_day]=15")
+  assert.Contains(t, url, "stripe_user[dob_month]=10")
+  assert.Contains(t, url, "stripe_user[dob_year]=2019")
+  assert.Contains(t, url, "stripe_user[email]=test%40example.com")
+  assert.Contains(t, url, "stripe_user[first_name]=first-name")
+  assert.Contains(t, url, "stripe_user[first_name_kana]=first-name-kana")
+  assert.Contains(t, url, "stripe_user[first_name_kanji]=first-name-kanji")
+  assert.Contains(t, url, "stripe_user[gender]=female")
+  assert.Contains(t, url, "stripe_user[last_name]=last-name")
+  assert.Contains(t, url, "stripe_user[last_name_kana]=last-name-kana")
+  assert.Contains(t, url, "stripe_user[last_name_kanji]=last-name-kanji")
+  assert.Contains(t, url, "stripe_user[phone_number]=999-999-9999")
+  assert.Contains(t, url, "stripe_user[physical_product]=false")
+  assert.Contains(t, url, "stripe_user[product_description]=product-description")
+  assert.Contains(t, url, "stripe_user[state]=NV")
+  assert.Contains(t, url, "stripe_user[street_address]=123+main")
+  assert.Contains(t, url, "stripe_user[url]=http%3A%2F%2Fexample.com")
   assert.Contains(t, url, "stripe_user[zip]=12345")
 }
 
 
-// RoundTripFunc .
+// RoundTripFunc.
 type RoundTripFunc func(req *http.Request) *http.Response
 
-// RoundTrip .
+// RoundTrip.
 func (f RoundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
   return f(req), nil
 }
 
-//NewTestClient returns *http.Client with Transport replaced to avoid making real calls
+// NewTestClient returns *http.Client with Transport replaced to avoid making
+// real calls
 func NewTestClient(fn RoundTripFunc) *http.Client {
   return &http.Client{
     Transport: RoundTripFunc(fn),
@@ -104,6 +137,7 @@ func StubConnectBackend(httpClient *http.Client) {
 
 func TestNewOAuthToken(t *testing.T) {
   stripe.Key = "sk_123"
+
   // stripe-mock doesn't support connect URL's so this stubs out the server.
   httpClient := NewTestClient(func(req *http.Request) *http.Response {
     buf := new(bytes.Buffer)
@@ -126,7 +160,6 @@ func TestNewOAuthToken(t *testing.T) {
     }`
     return &http.Response{
       StatusCode: 200,
-      // Send response to be tested
       Body:       ioutil.NopCloser(bytes.NewBufferString(responseBody)),
       Header:     make(http.Header),
     }
@@ -159,7 +192,6 @@ func TestNewOAuthTokenWithCustomKey(t *testing.T) {
 
     return &http.Response{
       StatusCode: 200,
-      // Send response to be tested
       Body:       ioutil.NopCloser(bytes.NewBufferString(`{}`)),
       Header:     make(http.Header),
     }
@@ -171,4 +203,34 @@ func TestNewOAuthTokenWithCustomKey(t *testing.T) {
   })
   assert.Nil(t, err)
   assert.NotNil(t, token)
+}
+
+func TestDeauthorize(t *testing.T) {
+  stripe.Key = "sk_123"
+
+  // stripe-mock doesn't support connect URL's so this stubs out the server.
+  httpClient := NewTestClient(func(req *http.Request) *http.Response {
+    buf := new(bytes.Buffer)
+    buf.ReadFrom(req.Body)
+    reqBody := buf.String()
+    assert.Contains(t, req.URL.String(), "https://localhost:12113/oauth/deauthorize")
+    assert.Contains(t, reqBody, "client_id=sk_999")
+    assert.Contains(t, reqBody, "stripe_user_id=acct_123")
+
+    resBody := `{"stripe_user_id": "acct_123"}`
+    return &http.Response{
+      StatusCode: 200,
+      Body:       ioutil.NopCloser(bytes.NewBufferString(resBody)),
+      Header:     make(http.Header),
+    }
+  })
+  StubConnectBackend(httpClient)
+
+  deauthorization, err := Del(&stripe.DeauthorizeParams{
+    ClientID:       stripe.String("sk_999"),
+    StripeUserID:   stripe.String("acct_123"),
+  })
+  assert.Nil(t, err)
+  assert.NotNil(t, deauthorization)
+  assert.Equal(t, deauthorization.StripeUserID, "acct_123")
 }
